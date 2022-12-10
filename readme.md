@@ -1,3 +1,6 @@
+# THIS PROJECT IS UNDERGOING A MAJOR REWRITE
+I'm currently rewriting everything about this tool, so be ready for a major change that will render current this version obselete. More information will be posted soon.
+
 # Auto Generator For Block Information
 This project was created to make developing our mod easier, and I see no reason to not release it to the public! It's really simple to use, but let me go over the basics:
 
