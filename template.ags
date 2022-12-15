@@ -1,0 +1,19 @@
+// This is a template file to show how to use the from file command!
+// to call this file, run: fromfile template
+
+
+// Any available command can be ran using this file!
+echo "Hello, I am being ran from a file!"
+
+// That includes creating tokens!
+newrp msg "Hello, this is a replacement token!"
+
+// Most commands support using tokens!
+echo %msg
+
+// You can pass lists, note that we don't use commas though and due to a limitation
+// with my current parsing function, you also can't pass strings separated by spaces!
+echo [this is a list of stuff] "Wow, that's a neat list!"
+
+// You can obviously create blocks using this file as well!
+newpb test_block cobbled_test_block
