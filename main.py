@@ -69,6 +69,12 @@ class AutoGen:
         self.REPLACEMENTS = {}
         self.TEMPLATES = {}
         self.get_files()
+        self.ORE_COPY = {
+            "copper": ["5", "2"],
+            "lapis": ["9", "4"],
+            "redstone": ["5", "4"],
+            "nether_gold": ["6", "2"]
+        }
 
     def save_data(self):
         log("Saving data...")
@@ -81,6 +87,7 @@ class AutoGen:
             log("Attempting to load data...")
             with open("data.agn", 'rb') as file:
                 self.__dict__.update(load(file))
+                self.get_files()
         except FileNotFoundError:
             pass
         except Exception as er:
@@ -313,7 +320,7 @@ def pillarblock(block_name, dropped_block=None):
     if dropped_block:
         new_file("loot_tables/blocks/stone_like", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name), nonblock(dropped_block))
     else:
-        new_file("loot_tables/blocks/drops_self", ["assets", path.join("loot_tables", "blocks")], file_name, nonblock(block_name))
+        new_file("loot_tables/blocks/drops_self", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name))
 
 
 @COMMANDMODULE.add_command("genericblock", "newgb",
@@ -330,22 +337,45 @@ def genericblock(block_name, dropped_block=None):
     if dropped_block:
         new_file("loot_tables/blocks/stone_like", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name), nonblock(dropped_block))
     else:
-        new_file("loot_tables/blocks/drops_self", ["assets", path.join("loot_tables", "blocks")], file_name, nonblock(block_name))
+        new_file("loot_tables/blocks/drops_self", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name))
 
 
-@COMMANDMODULE.add_command("oreblock", "newob",
+@COMMANDMODULE.add_command("oreblock", "newob", "newore",
                            does="Generates a new ore block. These are blocks that behave like iron_ore, diamond_ore, etc.")
-def oreblock(block_name, dropped_ingot):
+def oreblock(block_name, dropped_item, copyof=None, maxdropped=None, mindropped=None):
+    if not maxdropped and copyof:
+        maxdropped = a.ORE_COPY[copyof][0]
+    if not mindropped and copyof:
+        mindropped = a.ORE_COPY[copyof][1]
     if not a.NAMESPACE:
         log("You must set a namespace first, use {}", mixins=["setnamespace <name>"])
         return 1
-    block_name, dropped_block = arg_replace(block_name, dropped_ingot)
+    block_name, dropped_block = arg_replace(block_name, dropped_item)
     file_name = nonblock(block_name.split(":")[1])
     new_file("blockstates/default", ["assets", "blockstates"], file_name, block_name)
     new_file("models/block/default", ["assets", path.join("models", "block")], file_name, block_name)
     new_file("models/item/default", ["assets", path.join("models", "item")], file_name, block_name)
-    new_file("loot_tables/blocks/ore", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name), nonblock(block_name))
+    if mindropped and maxdropped:
+        new_file("loot_tables/blocks/customore", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name), nonblock(block_name), maxdropped, mindropped)
+    else:
+        new_file("loot_tables/blocks/ore", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name), nonblock(block_name))
 
+@COMMANDMODULE.add_command("oreloottable", "newolt",
+                           does="Generates a new ore loottable. This can be used to overwrite minecraft ores as well! Just set your namespace to minecraft.")
+def oreloottable(block_name, dropped_item, copyof=None, maxdropped=None, mindropped=None):
+    if not maxdropped and copyof:
+        maxdropped = a.ORE_COPY[copyof][0]
+    if not mindropped and copyof:
+        mindropped = a.ORE_COPY[copyof][1]
+    if not a.NAMESPACE:
+        log("You must set a namespace first, use {}", mixins=["setnamespace <name>"])
+        return 1
+    block_name, dropped_item = arg_replace(block_name, dropped_item)
+    file_name = nonblock(block_name.split(":")[1])
+    if mindropped and maxdropped:
+        new_file("loot_tables/blocks/customore", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name), nonblock(block_name), maxdropped, mindropped)
+    else:
+        new_file("loot_tables/blocks/ore", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name), nonblock(block_name))
 
 @COMMANDMODULE.add_command("sign", "newsign",
                            does="Generates a sign block.")
@@ -373,7 +403,7 @@ def sapling(block_name):
     new_file("blockstates/default", ["assets", "blockstates"], file_name, block_name)
     new_file("models/block/sapling", ["assets", path.join("models", "block")], file_name, block_name)
     new_file("models/item/asitem", ["assets", path.join("models", "item")], file_name, block_name)
-    new_file("loot_tables/blocks/drops_self", ["assets", path.join("loot_tables", "blocks")], file_name, nonblock(block_name))
+    new_file("loot_tables/blocks/drops_self", ["data", path.join("loot_tables", "blocks")], file_name, nonblock(block_name))
 
 
 @COMMANDMODULE.add_command("leaves", "newleaves",
@@ -514,6 +544,16 @@ COMMANDMODULE["newob"].set_help_msg(new_block_help)
 COMMANDMODULE["newsign"].set_help_msg(new_block_help)
 COMMANDMODULE["newsap"].set_help_msg(new_block_help)
 COMMANDMODULE["newleaves"].set_help_msg(new_block_help)
+COMMANDMODULE["newolt"].set_help_msg("""
+This is used to manually generate a loottable for an oreblock! If you want,
+you can even overwrite minecraft ore loottables by setting your namespace
+to minecraft, then generating a loottable for a minecraft ore! Example:
+
+namespace minecraft
+newolt emerald_ore emerald copy_of=copper maxdropped=12
+
+Don't forget to set your namespace back back though!
+""")
 
 
 try:
