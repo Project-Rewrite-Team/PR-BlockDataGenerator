@@ -1,4 +1,4 @@
-## AutoGen 2.0
+## AutoGen 2.0 (This is a beta release of the previous version, it does not work as intended yet, and WILL change frequently!)
 This project was created to help streamline the addition of blocks to any of Team Rewrite's mods. We hope it can be of as much use to you, as it has been to us. Below are some helpful tips on how to use it!
 
 When running this script, it has a help command that can tell you useful info about every command in it. I recommend you use this to your advantage and learn how to use most of the commands in this script. One command that I believe will be most useful is our `fromfile <filename>` command! Make sure to run `help <fromfile>` for more info on how to use it!
