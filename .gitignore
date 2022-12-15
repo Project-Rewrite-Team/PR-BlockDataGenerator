@@ -1,0 +1,5 @@
+*.agn
+*.ags
+TEMPDATA/
+.idea/
+__pycache__/
