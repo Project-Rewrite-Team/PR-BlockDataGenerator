@@ -1,6 +1,7 @@
 data.agn
 *.ags
-!template.ags
 TEMPDATA/
+Generated/
 .idea/
 __pycache__/
+!template.ags
