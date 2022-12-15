@@ -22,7 +22,7 @@ class FileReplacer:
         with open(path.join(newfilepath, newfilename), 'r') as file:
             filedata = file.read()
         for key in replacekeywords.keys():
-            filedata = filedata.replace(key, replacekeywords[key])
+            filedata = filedata.replace(key, str(replacekeywords[key]))
         FileReplacer.__log("writing changes to file...")
         with open(path.join(newfilepath, newfilename), 'w') as file:
             file.write(filedata)
