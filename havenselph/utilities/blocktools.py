@@ -1,5 +1,3 @@
-import os
-
 from .logger import log
 import json
 from os import path, makedirs
@@ -510,15 +508,50 @@ class BlockTools:
             log("[{}] All tasks completed.", mixins=[name])
 
         @staticmethod
-        def ore(directory: str, namespace: str, name: str, name_dropped: str=None, dropped: tuple or list=None):
+        def ore(directory: str, namespace: str, name: str, name_dropped: str=None, amount_dropped: tuple or list=None):
             log("[{}] Generating Json data...", mixins=[name])
             _blockstate = Template.BlockStates.default(namespace, name)
             _block_model = Template.Models.Block.default(namespace, name)
             _item_model = Template.Models.Item.block(namespace, name)
-            _loot_table = Template.LootTable.Blocks.ore(namespace, name, name_dropped) if not dropped else Template.LootTable.Blocks.custom_ore(namespace, name, name_dropped, dropped[0], dropped[1])
+            _loot_table = Template.LootTable.Blocks.ore(namespace, name, name_dropped) if not amount_dropped else Template.LootTable.Blocks.custom_ore(namespace, name, name_dropped, amount_dropped[0], amount_dropped[1])
             log("[{}] Writing Json data to files...", mixins=[name])
             BlockTools.make_file(directory, namespace, name, "bs", _blockstate)
             BlockTools.make_file(directory, namespace, name, "bm", _block_model)
             BlockTools.make_file(directory, namespace, name, "im", _item_model)
             BlockTools.make_file(directory, namespace, name, "ltb", _loot_table)
+            log("[{}] All tasks completed.", mixins=[name])
+
+        @staticmethod
+        def sign(directory: str, namespace: str, name: str, name_particles: str):
+            log("[{}] Generating Json data...", mixins=[name])
+            _blockstate = Template.BlockStates.default(namespace, name)
+            _block_model = Template.Models.Block.sign(namespace, name_particles)
+            _item_model = Template.Models.Item.item(namespace, name)
+            _loot_table = Template.LootTable.Blocks.drops_self(namespace, name)
+            log("[{}] Writing Json data to files...", mixins=[name])
+            BlockTools.make_file(directory, namespace, name, "bs", _blockstate)
+            BlockTools.make_file(directory, namespace, name, "bm", _block_model)
+            BlockTools.make_file(directory, namespace, name, "im", _item_model)
+            BlockTools.make_file(directory, namespace, name, "ltb", _loot_table)
+            log("[{}] All tasks completed.", mixins=[name])
+
+        @staticmethod
+        def sapling(directory: str, namespace: str, name: str):
+            log("[{}] Generating Json data...", mixins=[name])
+            _blockstate = Template.BlockStates.default(namespace, name)
+            _block_model = Template.Models.Block.sapling(namespace, name)
+            _item_model = Template.Models.Item.item(namespace, name)
+            _loot_table = Template.LootTable.Blocks.drops_self(namespace, name)
+            log("[{}] Writing Json data to files...", mixins=[name])
+            BlockTools.make_file(directory, namespace, name, "bs", _blockstate)
+            BlockTools.make_file(directory, namespace, name, "bm", _block_model)
+            BlockTools.make_file(directory, namespace, name, "im", _item_model)
+            BlockTools.make_file(directory, namespace, name, "ltb", _loot_table)
+            log("[{}] All tasks completed.", mixins=[name])
+
+        @staticmethod
+        def leaves(directory: str, namespace: str, name: str):
+            log("[{}] Generating Json data...", mixins=[name])
+
+            log("[{}] Writing Json data to files...", mixins=[name])
             log("[{}] All tasks completed.", mixins=[name])
