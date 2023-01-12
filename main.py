@@ -1,4 +1,5 @@
 # Various needed imports
+
 from havenselph.utilities import log
 import colorama as color
 from pickle import load
@@ -6,10 +7,11 @@ from pickle import dump
 from os import makedirs
 from os import path
 from os import getcwd
-from os import listdir
+from shutil import rmtree
 from os import abort
 from PyCommandsTool import Commands
 from havenselph.utilities.blocktools import BlockTools
+
 
 class AutoGen:
     class NameSpaceNotSet(Exception):
@@ -75,7 +77,7 @@ def run(_input: str):
     try:
         COMMANDMODULE.execute(_input)
 
-    except COMMANDMODULE.NoSuchCommand as er:
+    except COMMANDMODULE.NoSuchCommand:
         log("{} was not recognized as a command!", mixins=COMMANDMODULE.parse(_input)[0])
 
     except COMMANDMODULE.ParseError as er:
@@ -152,10 +154,10 @@ def setcustomdirectory(dirpath, use=False, create=False):
 @COMMANDMODULE.add_command("setnamespace", "namespace", does="Shows or sets current namespace.")
 def setnamespace(namespace=None):
     if namespace:
-        a.NAMESPACE = namespace
+        a._NAMESPACE = namespace
         log("Set namespace to: {}", mixins=[namespace])
     else:
-        log("Current namespace: {}", mixins=[a.NAMESPACE or "No namespace has been set!"])
+        log("Current namespace: {}", mixins=[a._NAMESPACE or "No namespace has been set!"])
 
 
 @COMMANDMODULE.add_command("newreplacement", "newrp",
@@ -190,6 +192,22 @@ def reset_replacements():
         a.REPLACEMENTS = {}
     else:
         log("Deletion aborted.")
+
+
+@COMMANDMODULE.add_command("deletegenerated", "cleargenerated", does="Clears files within custom directory or default directory. WILL DELETE FILES NOT MADE BY THE PROGRAM!")
+def delete_generated():
+    if a.USE_CUSTOM_DIRECTORY:
+        log("You are using a custom directory, it is recommended that you manually delete files instead to avoid deleting important files! You have been warned!", level="warn")
+    log("You are about to delete ALL files within: {}\nAre you sure you want to do this? Type {}", mixins=[a.target_directory(),"yes"], fore_color=color.Fore.RED, mixin_color=color.Fore.WHITE, level="warn")
+    if input(">>> ").lower()=="yes":
+        try:
+            rmtree(a.target_directory())
+            log("All files deleted!")
+        except WindowsError:
+            log("No file was found at path location.")
+
+    else:
+        log("Input did not match {}, aborting.", mixins=["yes"])
 
 
 @COMMANDMODULE.add_command("generatefromfile", "fromfile",
@@ -294,9 +312,6 @@ Isn't that way easier? You can also replace namespaces with tokens:
 """)
 
 # Input loop
-
-
-
 try:
     while True:
         run(input(">>> "))
@@ -304,6 +319,6 @@ try:
 except KeyboardInterrupt:
     a.save_data()
 
-except IOError:  # this error is weirdly thown when using exit() on pycharm.
+except IOError:  # this error is weirdly thrown when using exit() on pycharm.
     a.save_data()
     abort()
