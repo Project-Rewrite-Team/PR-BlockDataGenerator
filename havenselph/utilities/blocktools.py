@@ -3,7 +3,10 @@ import json
 from os import path, makedirs
 
 
-def get_path(directory: str, namespace: str, template: str, name: str=None):
+def get_path(directory: str, namespace: str, template: str, name: str, add_name: bool=True):
+    if ":" in name and name.split(":")[0]!=namespace:
+        namespace = name.split(":")[0]
+
     _tmp = {
         "bs":path.join(directory,"assets",namespace,"blockstates"),
         "bm":path.join(directory,"assets",namespace,"models","block"),
@@ -11,7 +14,7 @@ def get_path(directory: str, namespace: str, template: str, name: str=None):
         "ltb":path.join(directory,"data",namespace,"loot_tables","blocks")
     }[template]
 
-    return path.join(_tmp, name+".json") if name else _tmp
+    return path.join(_tmp, patch_name(namespace, name, remove_namespace=True)+".json") if add_name else _tmp
 
 
 def patch_name(namespace: str, name: str, add_tag: str=None, remove_namespace: bool=False):
@@ -472,9 +475,11 @@ class Template:
 class BlockTools:
     @staticmethod
     def make_file(directory: str, namespace: str, name: str, template: str, data: dict):
-        makedirs(get_path(directory, namespace, template), exist_ok=True)
+        log("Writing data to {}...", mixins=[get_path(directory, namespace, template, name)])
+        makedirs(get_path(directory, namespace, template, name, add_name=False), exist_ok=True)
         with open(get_path(directory, namespace, template, name), "w+") as file:
             json.dump(data, file, indent=4)
+        log("Data written to file.")
 
     class NewBlock:
         @staticmethod
@@ -508,12 +513,12 @@ class BlockTools:
             log("[{}] All tasks completed.", mixins=[name])
 
         @staticmethod
-        def ore(directory: str, namespace: str, name: str, name_dropped: str=None, amount_dropped: tuple or list=None):
+        def ore(directory: str, namespace: str, name: str, name_dropped: str=None, max_dropped: int=None, min_dropped: int=None,):
             log("[{}] Generating Json data...", mixins=[name])
             _blockstate = Template.BlockStates.default(namespace, name)
             _block_model = Template.Models.Block.default(namespace, name)
             _item_model = Template.Models.Item.block(namespace, name)
-            _loot_table = Template.LootTable.Blocks.ore(namespace, name, name_dropped) if not amount_dropped else Template.LootTable.Blocks.custom_ore(namespace, name, name_dropped, amount_dropped[0], amount_dropped[1])
+            _loot_table = Template.LootTable.Blocks.ore(namespace, name, name_dropped) if not min_dropped or max_dropped else Template.LootTable.Blocks.custom_ore(namespace, name, name_dropped, max_dropped, min_dropped)
             log("[{}] Writing Json data to files...", mixins=[name])
             BlockTools.make_file(directory, namespace, name, "bs", _blockstate)
             BlockTools.make_file(directory, namespace, name, "bm", _block_model)
@@ -550,8 +555,15 @@ class BlockTools:
             log("[{}] All tasks completed.", mixins=[name])
 
         @staticmethod
-        def leaves(directory: str, namespace: str, name: str):
+        def leaves(directory: str, namespace: str, name: str, name_sapling, name_stick="minecraft:stick"):
             log("[{}] Generating Json data...", mixins=[name])
-
+            _blockstate = Template.BlockStates.default(namespace, name)
+            _block_model = Template.Models.Block.leaves(namespace, name)
+            _item_model = Template.Models.Item.item(namespace, name)
+            _loot_table = Template.LootTable.Blocks.leaves(namespace, name, name_sapling, name_stick)
             log("[{}] Writing Json data to files...", mixins=[name])
+            BlockTools.make_file(directory, namespace, name, "bs", _blockstate)
+            BlockTools.make_file(directory, namespace, name, "bm", _block_model)
+            BlockTools.make_file(directory, namespace, name, "im", _item_model)
+            BlockTools.make_file(directory, namespace, name, "ltb", _loot_table)
             log("[{}] All tasks completed.", mixins=[name])
