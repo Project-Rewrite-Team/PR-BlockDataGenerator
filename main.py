@@ -1,6 +1,7 @@
 # Various needed imports
 
 from havenselph.utilities import log
+from havenselph.utilities import Template, BlockTools
 import colorama as color
 from pickle import load
 from pickle import dump
@@ -10,7 +11,6 @@ from os import getcwd
 from shutil import rmtree
 from os import abort
 from PyCommandsTool import Commands
-from havenselph.utilities.blocktools import BlockTools
 
 
 class AutoGen:
@@ -20,24 +20,24 @@ class AutoGen:
     def __init__(self):
         self.USE_CUSTOM_DIRECTORY = False
         self.CUSTOM_DIRECTORY = None
-        self._NAMESPACE = None
+        self.NAMESPACE_DATA = None
         self.REPLACEMENTS = {}
         self.ORE_COPY = {
-            "copper": ["5", "2"],
-            "lapis": ["9", "4"],
-            "redstone": ["5", "4"],
-            "nether_gold": ["6", "2"]
+            "copper": (5, 2),
+            "lapis": (9, 4),
+            "redstone": (5, 4),
+            "nether_gold": (6, 2)
         }
 
     @property
     def NAMESPACE(self):
-        if self._NAMESPACE:
-            return self._NAMESPACE
+        if self.NAMESPACE_DATA:
+            return self.NAMESPACE_DATA
         else:
             log("You must set a namespace, enter one now:")
-            self._NAMESPACE = input(">>> ")
-            log("Namespace set to: {}", mixins=[self._NAMESPACE])
-            return self._NAMESPACE
+            self.NAMESPACE_DATA = input(">>> ")
+            log("Namespace set to: {}", mixins=[self.NAMESPACE_DATA])
+            return self.NAMESPACE_DATA
 
     def save_data(self):
         log("Saving data...")
@@ -154,10 +154,11 @@ def setcustomdirectory(dirpath, use=False, create=False):
 @COMMANDMODULE.add_command("setnamespace", "namespace", does="Shows or sets current namespace.")
 def setnamespace(namespace=None):
     if namespace:
-        a._NAMESPACE = namespace
+        a.NAMESPACE_DATA = namespace
         log("Set namespace to: {}", mixins=[namespace])
     else:
-        log("Current namespace: {}", mixins=[a._NAMESPACE or "No namespace has been set!"])
+        # noinspection
+        log("Current namespace: {}", mixins=[a.NAMESPACE_DATA or "No namespace has been set!"])
 
 
 @COMMANDMODULE.add_command("newreplacement", "newrp",
@@ -195,19 +196,20 @@ def reset_replacements():
 
 
 @COMMANDMODULE.add_command("deletegenerated", "cleargenerated", does="Clears files within custom directory or default directory. WILL DELETE FILES NOT MADE BY THE PROGRAM!")
-def delete_generated():
+def delete_generated(override: bool=False):
     if a.USE_CUSTOM_DIRECTORY:
         log("You are using a custom directory, it is recommended that you manually delete files instead to avoid deleting important files! You have been warned!", level="warn")
-    log("You are about to delete ALL files within: {}\nAre you sure you want to do this? Type {}", mixins=[a.target_directory(),"yes"], fore_color=color.Fore.RED, mixin_color=color.Fore.WHITE, level="warn")
-    if input(">>> ").lower()=="yes":
-        try:
-            rmtree(a.target_directory())
-            log("All files deleted!")
-        except WindowsError:
-            log("No file was found at path location.")
 
-    else:
-        log("Input did not match {}, aborting.", mixins=["yes"])
+    if not override:
+        log("You are about to delete ALL files within: {}\nAre you sure you want to do this? Type {}", mixins=[a.target_directory(), "yes"], fore_color=color.Fore.RED, mixin_color=color.Fore.WHITE, level="warn")
+        if not input(">>> ").lower()=="yes":
+            log("Input did not match {}, aborting.", mixins=["yes"])
+            return
+    try:
+        rmtree(a.target_directory())
+        log("All files deleted!")
+    except WindowsError:
+        log("No file was found at path location.")
 
 
 @COMMANDMODULE.add_command("generatefromfile", "fromfile",
@@ -227,9 +229,60 @@ def generatefromfile(filename="generate.ags"):
             level="error")
 
 
-@COMMANDMODULE.add_command("testing","test",does="Generates a test block!")
-def testing(name: str, dropped_item: str=None):
-    BlockTools.NewBlock.generic(a.target_directory(), a.NAMESPACE, name, dropped_item)
+@COMMANDMODULE.add_command("newdb","newdefaultblock", does="Generates a default block. Pass a second variable to set what it drops.")
+def default_block(block_name: str, dropped_item: str=None):
+    BlockTools.NewBlock.generic(a.target_directory(), a.NAMESPACE, block_name, dropped_item)
+
+
+@COMMANDMODULE.add_command("newpb", "newpillarblock", does="Generates a pillar block, these behave like logs. Pass a second variable to set what it drops.")
+def pillar_block(block_name: str, dropped_item: str=None):
+    BlockTools.NewBlock.pillar(a.target_directory(), a.NAMESPACE, block_name, dropped_item)
+
+
+@COMMANDMODULE.add_command("newwb", "newwoodblock", does="Generates a pillar block with no end block, this behaves like wood blocks. Pass a second variable to set what it drops.")
+def wood_block(block_name: str, dropped_item: str, texture_name: str=None):
+    BlockTools.NewBlock.pillar(a.target_directory(), a.NAMESPACE, block_name, dropped_item, texture_name)
+
+
+@COMMANDMODULE.add_command("newob", "neworeblock", does="Generates an ore block. Pass 'copyof=<ore>' to copy their drop settings.")
+def ore_block(block_name: str, dropped_ore: str, copyof: str=None, max_min_dropped: list or tuple=(0,0)):
+    if copyof in a.ORE_COPY.keys():
+        max_dropped, min_dropped = a.ORE_COPY[copyof]
+
+    if max_min_dropped != (0,0) or copyof not in a.ORE_COPY.keys():
+        max_dropped, min_dropped = max_min_dropped
+
+    # noinspection PyUnboundLocalVariable
+    if (max_dropped, min_dropped) != (0, 0):
+        BlockTools.NewBlock.ore(a.target_directory(), a.NAMESPACE, block_name, dropped_ore, max_dropped, min_dropped)
+    else:
+        BlockTools.NewBlock.ore(a.target_directory(), a.NAMESPACE, block_name, dropped_ore)
+
+
+@COMMANDMODULE.add_command("newolt", "neworeloottable", does="Overwrites an ore's loot_table, useful for overwriting minecraft blocks or even previously generated ones.")
+def ore_loot_table(block_name: str, dropped_ore, copyof: str=None, max_min_dropped: list or tuple=(0,0)):
+    if copyof in a.ORE_COPY.keys():
+        max_dropped, min_dropped = a.ORE_COPY[copyof]
+
+    if max_min_dropped != (0,0) or copyof not in a.ORE_COPY.keys():
+        max_dropped, min_dropped = max_min_dropped
+
+    # noinspection PyUnboundLocalVariable
+    if (max_dropped, min_dropped) != (0, 0):
+        _loot_table = Template.LootTable.Blocks.custom_ore(a.NAMESPACE, block_name, dropped_ore, max_dropped, min_dropped)
+    else:
+        _loot_table = Template.LootTable.Blocks.ore(a.NAMESPACE, block_name, dropped_ore)
+    BlockTools.make_file(a.target_directory(), a.NAMESPACE, block_name, "ltb", _loot_table)
+
+
+@COMMANDMODULE.add_command("newsap", "newsapling", does="Generates a sapling.")
+def sapling(block_name: str):
+    BlockTools.NewBlock.sapling(a.target_directory(), a.NAMESPACE, block_name)
+
+
+@COMMANDMODULE.add_command("newlvs", "newleaves", does="Generates a leaves block.")
+def leaves(block_name: str, sapling_name: str, stick_name="minecraft:stick"):
+    BlockTools.NewBlock.leaves(a.target_directory(), a.NAMESPACE, block_name, sapling_name, stick_name)
 
 
 # Help Messages
