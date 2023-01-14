@@ -11,6 +11,7 @@ from os import getcwd
 from shutil import rmtree
 from os import abort
 from PyCommandsTool import Commands
+import time
 
 
 class AutoGen:
@@ -34,10 +35,7 @@ class AutoGen:
         if self.NAMESPACE_DATA:
             return self.NAMESPACE_DATA
         else:
-            log("You must set a namespace, enter one now:")
-            self.NAMESPACE_DATA = input(">>> ")
-            log("Namespace set to: {}", mixins=[self.NAMESPACE_DATA])
-            return self.NAMESPACE_DATA
+            raise self.NameSpaceNotSet
 
     def save_data(self):
         log("Saving data...")
@@ -212,6 +210,11 @@ def delete_generated(override: bool=False):
         log("No file was found at path location.")
 
 
+@COMMANDMODULE.add_command("readfile", "readfromfile", "readjson")
+def read_file():
+    pass
+
+
 @COMMANDMODULE.add_command("generatefromfile", "fromfile",
                            does="Runs a file as input to this terminal, allowing auto generation of hundreds of blocks in one command!")
 def generatefromfile(filename="generate.ags"):
@@ -229,7 +232,7 @@ def generatefromfile(filename="generate.ags"):
             level="error")
 
 
-@COMMANDMODULE.add_command("newdb","newdefaultblock", does="Generates a default block. Pass a second variable to set what it drops.")
+@COMMANDMODULE.add_command("newdb", "newdefaultblock", does="Generates a default block. Pass a second variable to set what it drops.")
 def default_block(block_name: str, dropped_item: str=None):
     BlockTools.NewBlock.generic(a.target_directory(), a.NAMESPACE, block_name, dropped_item)
 
@@ -283,6 +286,20 @@ def sapling(block_name: str):
 @COMMANDMODULE.add_command("newlvs", "newleaves", does="Generates a leaves block.")
 def leaves(block_name: str, sapling_name: str, stick_name="minecraft:stick"):
     BlockTools.NewBlock.leaves(a.target_directory(), a.NAMESPACE, block_name, sapling_name, stick_name)
+
+
+@COMMANDMODULE.add_command("benchmark", does="Benchmarks this tool on your PC.")
+def benchmark(amount: int):
+    _tmp = a.NAMESPACE_DATA
+    a.NAMESPACE_DATA = "testingthings"
+    start = time.perf_counter()
+    for i in range(int(amount)):
+        run(f"newpb testinblock_{i} test_item")
+    end = time.perf_counter()
+    run(f"deletegenerated override=True")
+    a.NAMESPACE_DATA = _tmp
+    log("Generated {} files in {} seconds!", mixins=[int(amount)*4,end-start])
+
 
 
 # Help Messages

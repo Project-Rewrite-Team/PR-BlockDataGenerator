@@ -47,7 +47,7 @@ class Template:
         @staticmethod
         def pillared_block(namespace: str, name: str, name_horizontal: str=None):
             _name = patch_name(namespace, name, add_tag="block/")
-            _name_horizontal = patch_name(namespace, name_horizontal, add_tag="block/") or _name+"_horizontal"
+            _name_horizontal = patch_name(namespace, name_horizontal, add_tag="block/") if name_horizontal else _name+"_horizontal"
             return {
                 "variants": {
                     "axis=x": {
