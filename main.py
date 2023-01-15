@@ -288,18 +288,25 @@ def leaves(block_name: str, sapling_name: str, stick_name="minecraft:stick"):
     BlockTools.NewBlock.leaves(a.target_directory(), a.NAMESPACE, block_name, sapling_name, stick_name)
 
 
-@COMMANDMODULE.add_command("benchmark", does="Benchmarks this tool on your PC.")
+@COMMANDMODULE.add_command("newsn", "newsign", does="Generates a new sign.")
+def sign(block_name: str, planks_name: str):
+    BlockTools.NewBlock.sign(a.target_directory(), a.NAMESPACE, block_name, planks_name)
+
+
+# @COMMANDMODULE.add_command("benchmark", does="Benchmarks this tool on your PC.")
 def benchmark(amount: int):
     _tmp = a.NAMESPACE_DATA
-    a.NAMESPACE_DATA = "testingthings"
+    setnamespace("testingdata")
     start = time.perf_counter()
     for i in range(int(amount)):
-        run(f"newpb testinblock_{i} test_item")
+        pillar_block(f"test_{i}", f"test_item_{i}")
     end = time.perf_counter()
-    run(f"deletegenerated override=True")
-    a.NAMESPACE_DATA = _tmp
+    delete_generated(True)
+    setnamespace(_tmp)
     log("Generated {} files in {} seconds!", mixins=[int(amount)*4,end-start])
 
+
+benchmark(300)
 
 
 # Help Messages
@@ -340,6 +347,8 @@ in the console!
 By default, this command targets "generate.ags" but you can change this
 by passing a file name, ex:
 fromfile myscript.ags
+
+Try reading template.ags if you have more questions!
     """)
 COMMANDMODULE["setnamespace"].set_help_msg("""
 This command sets the namespace for the current project. This is the
